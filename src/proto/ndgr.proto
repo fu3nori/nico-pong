@@ -1,0 +1,111 @@
+// NDGR (ニコ生コメントストリーム) 用 protobuf 定義 (nico pong 最小サブセット)。
+//
+// オリジナル: dwango.nicolive.chat.{data,service.edge}
+// (https://github.com/n-air-app など Dwango が公開している .proto を参考に必要分のみ抜粋)
+//
+// 注意:
+//   - パッケージ名/メッセージ名/フィールド番号は実 NDGR 仕様と一致させること。
+//   - 知らないフィールドは proto3 の規約により無視される (= 将来追加されても decode 失敗しない)。
+//   - google.protobuf.Timestamp は依存を増やさないため Timestamp として自前定義する
+//     (フィールド番号 1=seconds(int64), 2=nanos(int32) はオリジナルと同一)。
+
+syntax = "proto3";
+
+package dwango.nicolive.chat;
+
+// ===== 共通 =====
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+// ===== data.atoms 系 =====
+
+// data.Chat (視聴者コメント本体)
+// 参照: https://pkg.go.dev/github.com/shinosaki/nicolive-comment-protobuf/proto/dwango/nicolive/chat/data
+message Chat {
+  string content = 1;                 // 本文 (コメントテキスト)
+  optional string name = 2;          // 名札 (任意)
+  int32 vpos = 3;
+  int32 accountStatus = 4;           // 0=STANDARD, 1=PREMIUM
+  optional int64 rawUserId = 5;      // ログイン中のみ (int64 varint)
+  optional string hashedUserId = 6;  // 匿名コメ用ハッシュID
+  ChatModifier modifier = 7;         // 装飾 (本拡張では未使用)
+  int32 no = 8;
+}
+
+// ChatModifier は本拡張では decode しない。field 7 は length-delimited skip する。
+message ChatModifier {}
+
+// data.OperatorComment (生主/運営コメント)
+message OperatorComment {
+  string content = 1;
+  string name = 2;
+  string link = 3;
+  string decoration = 4;
+}
+
+// ===== service.edge.payload 系 =====
+
+// ストリーム長さ前置きで送信される ChunkedEntry。
+// 視聴クライアントが viewUri を GET したとき返ってくる。
+message ChunkedEntry {
+  oneof entry {
+    PackedSegment backward = 1; // 過去メッセージのまとめ取り URI
+    PackedSegment previous = 2;
+    MessageSegment segment = 3; // 実コメントが入る segment URI
+    ReadyForNext next = 4;      // 続きの ChunkedEntry ストリーム URI
+  }
+}
+
+message PackedSegment {
+  string uri = 1;
+}
+
+message MessageSegment {
+  Timestamp from = 1;
+  Timestamp until = 2;
+  string uri = 3;
+}
+
+message ReadyForNext {
+  int64 at = 1;
+}
+
+// segment URI を GET したときに長さ前置きで届く ChunkedMessage。
+message ChunkedMessage {
+  Meta meta = 1;
+  oneof payload {
+    NicoliveMessage message = 2;
+    NicoliveState state = 3;
+    int32 signal = 4;
+  }
+}
+
+message Meta {
+  string id = 1;
+  Timestamp at = 2;
+  string origin = 3;
+}
+
+message NicoliveMessage {
+  oneof data {
+    Chat chat = 1;
+    // 他の payload (gift, simpleNotification, nicoad, ...) は本拡張では使用しないため未定義。
+    // proto3 規約により無視される。
+  }
+}
+
+message NicoliveState {
+  Marquee marquee = 2;
+  // 他フィールドは未使用。
+}
+
+message Marquee {
+  MarqueeDisplay display = 1;
+}
+
+message MarqueeDisplay {
+  OperatorComment operatorComment = 1;
+}
