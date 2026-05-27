@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "nico pong",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ニコニコ生放送の動画紹介放送を支援するChrome拡張です。",
   "permissions": ["sidePanel", "storage", "tabs", "scripting"],
   "host_permissions": [

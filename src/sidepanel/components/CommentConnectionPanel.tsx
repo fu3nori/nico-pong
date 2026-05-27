@@ -1,7 +1,8 @@
 import type {
-  CommentConnectionStatus,
   RequestAcceptanceSettings,
 } from "../../shared/types";
+
+type CommentConnectionStatus = "connected" | "connecting" | "disconnected" | "error";
 
 type Props = {
   status: CommentConnectionStatus;
@@ -13,25 +14,10 @@ type Props = {
   onDisconnect: () => void;
 };
 
-function statusLabel(status: CommentConnectionStatus, recvCount: number): string {
-  switch (status) {
-    case "connected":
-      // 受信実績がある時は "受信中"、まだなら "接続済"
-      return recvCount > 0 ? `受信中 (${recvCount}件)` : "接続済";
-    case "connecting":
-      return "接続中…";
-    case "error":
-      return "エラー";
-    case "disconnected":
-    default:
-      return "未接続";
-  }
-}
-
 export default function CommentConnectionPanel({
   status,
-  error,
-  recvCount,
+  error: _error,
+  recvCount: _recvCount,
   acceptance,
   onAcceptanceChange,
   onConnect,
@@ -42,9 +28,6 @@ export default function CommentConnectionPanel({
     <section className="comment-conn">
       <div className="conn-header">
         <span className="label">コメント接続:</span>
-        <span className={`status-badge conn-${status}`}>
-          {statusLabel(status, recvCount)}
-        </span>
         {connected ? (
           <button type="button" onClick={onDisconnect}>
             停止
@@ -85,7 +68,6 @@ export default function CommentConnectionPanel({
           />
         </label>
       </div>
-      {error ? <div className="conn-error">{error}</div> : null}
     </section>
   );
 }

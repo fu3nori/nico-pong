@@ -1,7 +1,7 @@
 {
   "name": "nico-pong",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ニコニコ生放送の動画紹介放送を支援するChrome拡張です。",
   "type": "module",
   "scripts": {

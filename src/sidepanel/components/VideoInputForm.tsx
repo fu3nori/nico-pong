@@ -59,6 +59,7 @@ export default function VideoInputForm({ activeTab, onAdd, notify }: Props) {
 
   return (
     <form className="input-form" onSubmit={handleSubmit}>
+      <div className="input-form-label">動画IDまたはURL入力</div>
       <div className="row">
         <input
           type="text"
